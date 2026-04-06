@@ -207,3 +207,4 @@ def plan_route(carla_map, start_location, goal_location, sampling_resolution=2.0
 
     route = [nodes[node_id] for node_id in path_ids]
     return route
+#可以变道
