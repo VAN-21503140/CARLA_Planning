@@ -59,4 +59,4 @@ route = plan_route(
 draw_route(world, route)
 print("route length:", len(route))
 
-time.sleep(10)
+time.sleep(1000)

@@ -82,19 +82,16 @@ def add_edge(graph, a_id, b_id, cost):
 
 def build_graph(carla_map, sampling_resolution=2.0):
     topology = carla_map.get_topology()
-
     graph = {}
     nodes = {}
 
+    # 第一步：构建纵向路径（保持你原有的逻辑，稍微优化了循环）
     for entry_wp, exit_wp in topology:
         path = [entry_wp]
         current_wp = entry_wp
 
-        # 沿着当前 lane 连续采样，直到接近 exit_wp
         while True:
-            dist_to_exit = current_wp.transform.location.distance(
-                exit_wp.transform.location
-            )
+            dist_to_exit = current_wp.transform.location.distance(exit_wp.transform.location)
             if dist_to_exit <= sampling_resolution:
                 break
 
@@ -102,19 +99,8 @@ def build_graph(carla_map, sampling_resolution=2.0):
             if not next_wps:
                 break
 
-            # 只选择同一条 lane 上最自然的前进点
-            next_wp = None
-            for cand in next_wps:
-                if (cand.road_id == current_wp.road_id and
-                    cand.section_id == current_wp.section_id and
-                    cand.lane_id == current_wp.lane_id):
-                    next_wp = cand
-                    break
-
-            if next_wp is None:
-                next_wp = next_wps[0]
-
-            # 防止死循环
+            # 简单的防死循环和同车道检查
+            next_wp = next_wps[0]
             if waypoint_id(next_wp) == waypoint_id(current_wp):
                 break
 
@@ -122,26 +108,80 @@ def build_graph(carla_map, sampling_resolution=2.0):
             current_wp = next_wp
 
         # 补上 exit_wp
-        if waypoint_id(path[-1]) != waypoint_id(exit_wp):
+        if len(path) == 0 or waypoint_id(path[-1]) != waypoint_id(exit_wp):
             path.append(exit_wp)
 
-        # 将连续 waypoint 加入图
-        for i in range(len(path)):
-            wp_id = waypoint_id(path[i])
-            nodes[wp_id] = path[i]
+        # 将点加入节点字典
+        for wp in path:
+            wp_id = waypoint_id(wp)
+            nodes[wp_id] = wp
             if wp_id not in graph:
                 graph[wp_id] = []
 
+        # 添加纵向边（前后连接）
         for i in range(len(path) - 1):
-            a = path[i]
-            b = path[i + 1]
-            a_id = waypoint_id(a)
-            b_id = waypoint_id(b)
-            cost = waypoint_distance(a, b)
-            add_edge(graph, a_id, b_id, cost)
+            a_id = waypoint_id(path[i])
+            b_id = waypoint_id(path[i + 1])
+            cost = waypoint_distance(path[i], path[i + 1])
+            graph[a_id].append((b_id, cost))
+
+    # ==========================================
+    # 第二步：新增横向连接（变道逻辑）
+    # ==========================================
+    # 遍历图中所有的节点，尝试连接相邻车道
+    for wp_id, wp in nodes.items():
+        # 检查左侧车道
+        left_wp = wp.get_left_lane()
+        if left_wp and is_valid_lane_change(wp, left_wp):
+            left_id = waypoint_id(left_wp)
+            # 如果左侧车道的点也在我们的图中（通常都在），则建立双向连接
+            if left_id in nodes:
+                # 计算横向移动的成本（通常比纵向行驶成本高，以鼓励少变道）
+                lat_cost = waypoint_distance(wp, left_wp) * 1.5
+
+                # 当前 -> 左侧
+                graph[wp_id].append((left_id, lat_cost))
+                # 左侧 -> 当前 (允许变回来)
+                if left_id not in graph: graph[left_id] = []
+                graph[left_id].append((wp_id, lat_cost))
+
+        # 检查右侧车道
+        right_wp = wp.get_right_lane()
+        if right_wp and is_valid_lane_change(wp, right_wp):
+            right_id = waypoint_id(right_wp)
+            if right_id in nodes:
+                lat_cost = waypoint_distance(wp, right_wp) * 1.5
+
+                # 当前 -> 右侧
+                graph[wp_id].append((right_id, lat_cost))
+                # 右侧 -> 当前
+                if right_id not in graph: graph[right_id] = []
+                graph[right_id].append((wp_id, lat_cost))
 
     return graph, nodes
 
+
+def is_valid_lane_change(current_wp, neighbor_wp):
+    """
+    判断是否允许变道到 neighbor_wp
+    """
+    # 1. 必须在同一条 Road 和 Section 上
+    if (current_wp.road_id != neighbor_wp.road_id or
+            current_wp.section_id != neighbor_wp.section_id):
+        return False
+
+    # 2. 防止逆行：车道 ID 的符号必须相同
+    # 在 CARLA 中，正数车道通常表示一个方向，负数表示反方向
+    if current_wp.lane_id * neighbor_wp.lane_id <= 0:
+        return False
+
+    # 3. (可选) 检查车道类型
+    # 避免变道到路肩、人行道或隔离带
+    # LaneType 枚举: Driving=1, Stop=4, Sidewalk=15 等
+    if neighbor_wp.lane_type != carla.LaneType.Driving:
+        return False
+
+    return True
 
 def plan_route(carla_map, start_location, goal_location, sampling_resolution=2.0):
     graph, nodes = build_graph(carla_map, sampling_resolution=sampling_resolution)
