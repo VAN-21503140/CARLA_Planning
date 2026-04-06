@@ -4,15 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="430a066b-2e7b-44bf-a003-4a14ccade9d7" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/carla_planning.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/planner.py" afterDir="false" />
+    <list default="true" id="430a066b-2e7b-44bf-a003-4a14ccade9d7" name="更改" comment="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/planner.py" beforeDir="false" afterPath="$PROJECT_DIR$/planner.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,6 +17,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "VAN-21503140"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/VAN-21503140/CARLA_Planning",
+    "accountId": "c15867a6-bd4a-4eaa-8834-befd9a02838a"
+  }
+}]]></component>
   <component name="ProjectColorInfo"><![CDATA[{
   "associatedIndex": 7
 }]]></component>
@@ -60,14 +67,27 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1775460341325</updated>
-      <workItem from="1775460342403" duration="4149000" />
+      <workItem from="1775460342403" duration="8065000" />
     </task>
+    <task id="LOCAL-00001" summary="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径">
+      <option name="closed" value="true" />
+      <created>1775466705088</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1775466705088</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径" />
+    <option name="LAST_COMMIT_MESSAGE" value="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径" />
+  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CARLA_Planning$main.coverage" NAME="main 覆盖结果" MODIFIED="1775466463611" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CARLA_Planning$main.coverage" NAME="main 覆盖结果" MODIFIED="1775470170186" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
