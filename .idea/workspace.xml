@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="430a066b-2e7b-44bf-a003-4a14ccade9d7" name="更改" comment="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径">
+    <list default="true" id="430a066b-2e7b-44bf-a003-4a14ccade9d7" name="更改" comment="planner由原来的粗糙构图（边与边之间）转换为了稠密构图（点与点之间的构图）。main中起点红色，过程黄色，终点绿色。">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/planner.py" beforeDir="false" afterPath="$PROJECT_DIR$/planner.py" afterDir="false" />
@@ -67,7 +67,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1775460341325</updated>
-      <workItem from="1775460342403" duration="8065000" />
+      <workItem from="1775460342403" duration="8362000" />
     </task>
     <task id="LOCAL-00001" summary="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径">
       <option name="closed" value="true" />
@@ -77,7 +77,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775466705088</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="planner由原来的粗糙构图（边与边之间）转换为了稠密构图（点与点之间的构图）。main中起点红色，过程黄色，终点绿色。">
+      <option name="closed" value="true" />
+      <created>1775471651176</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1775471651176</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -85,7 +93,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径" />
-    <option name="LAST_COMMIT_MESSAGE" value="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径" />
+    <MESSAGE value="planner由原来的粗糙构图（边与边之间）转换为了稠密构图（点与点之间的构图）。main中起点红色，过程黄色，终点绿色。" />
+    <option name="LAST_COMMIT_MESSAGE" value="planner由原来的粗糙构图（边与边之间）转换为了稠密构图（点与点之间的构图）。main中起点红色，过程黄色，终点绿色。" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/CARLA_Planning$main.coverage" NAME="main 覆盖结果" MODIFIED="1775470170186" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
