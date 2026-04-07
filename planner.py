@@ -80,85 +80,261 @@ def add_edge(graph, a_id, b_id, cost):
     graph[a_id].append((b_id, cost))
 
 
-def build_graph(carla_map, sampling_resolution=2.0):
+from collections import defaultdict
+
+
+def build_graph(carla_map, sampling_resolution=2.0, lane_change_cost_factor=1.5):
+    """
+    构建更完整的 CARLA waypoint graph
+
+    返回:
+        graph: {
+            wp_id: [(neighbor_wp_id, cost), ...],
+            ...
+        }
+        nodes: {
+            wp_id: waypoint,
+            ...
+        }
+
+    设计要点:
+    1. 先基于 topology 对每条 segment 做采样，收集尽可能完整的节点
+    2. 先连接 segment 内部顺序边
+    3. 再对每个节点补充所有 next() 分支，确保路口分支完整
+    4. 再补左右变道边
+    """
+
     topology = carla_map.get_topology()
-    graph = {}
+
+    graph = defaultdict(list)
     nodes = {}
+    sampled_paths = []
 
-    # 第一步：构建纵向路径（保持你原有的逻辑，稍微优化了循环）
+    # =========================================================
+    # Step 1. 基于 topology 对每条 segment 采样
+    # 这里只负责“沿当前 segment 走到 exit”
+    # 不负责“保留所有路口分支”
+    # =========================================================
     for entry_wp, exit_wp in topology:
-        path = [entry_wp]
-        current_wp = entry_wp
+        path = _sample_segment_path(entry_wp, exit_wp, sampling_resolution)
 
-        while True:
-            dist_to_exit = current_wp.transform.location.distance(exit_wp.transform.location)
-            if dist_to_exit <= sampling_resolution:
-                break
+        if not path:
+            continue
 
-            next_wps = current_wp.next(sampling_resolution)
-            if not next_wps:
-                break
+        sampled_paths.append(path)
 
-            # 简单的防死循环和同车道检查
-            next_wp = next_wps[0]
-            if waypoint_id(next_wp) == waypoint_id(current_wp):
-                break
-
-            path.append(next_wp)
-            current_wp = next_wp
-
-        # 补上 exit_wp
-        if len(path) == 0 or waypoint_id(path[-1]) != waypoint_id(exit_wp):
-            path.append(exit_wp)
-
-        # 将点加入节点字典
         for wp in path:
             wp_id = waypoint_id(wp)
             nodes[wp_id] = wp
-            if wp_id not in graph:
-                graph[wp_id] = []
+            _ensure_node(graph, wp_id)
 
-        # 添加纵向边（前后连接）
+    # =========================================================
+    # Step 2. 连接每条 sampled segment 内部的顺序边
+    # =========================================================
+    for path in sampled_paths:
         for i in range(len(path) - 1):
-            a_id = waypoint_id(path[i])
-            b_id = waypoint_id(path[i + 1])
-            cost = waypoint_distance(path[i], path[i + 1])
-            graph[a_id].append((b_id, cost))
+            a = path[i]
+            b = path[i + 1]
+            a_id = waypoint_id(a)
+            b_id = waypoint_id(b)
+            cost = waypoint_distance(a, b)
+            _add_edge(graph, a_id, b_id, cost)
 
-    # ==========================================
-    # 第二步：新增横向连接（变道逻辑）
-    # ==========================================
-    # 遍历图中所有的节点，尝试连接相邻车道
-    for wp_id, wp in nodes.items():
-        # 检查左侧车道
+    # =========================================================
+    # Step 3. 对所有节点补“所有 next 分支”
+    # 这是保证路口/岔路口不漏分支的关键
+    # =========================================================
+    # 注意：这里用 list(nodes.items())，避免遍历中途 dict 变化报错
+    initial_node_items = list(nodes.items())
+
+    for wp_id, wp in initial_node_items:
+        next_wps = wp.next(sampling_resolution)
+        for nxt in next_wps:
+            nxt_id = waypoint_id(nxt)
+
+            if nxt_id not in nodes:
+                nodes[nxt_id] = nxt
+                _ensure_node(graph, nxt_id)
+
+            cost = waypoint_distance(wp, nxt)
+            _add_edge(graph, wp_id, nxt_id, cost)
+
+    # =========================================================
+    # Step 4. 补横向变道边
+    # 不强依赖“左右车道 waypoint 必须精确命中已采样节点”
+    # 而是去对应 lane 上找最近已存在节点
+    # =========================================================
+    all_node_items = list(nodes.items())
+
+    for wp_id, wp in all_node_items:
+        # 左变道
         left_wp = wp.get_left_lane()
         if left_wp and is_valid_lane_change(wp, left_wp):
-            left_id = waypoint_id(left_wp)
-            # 如果左侧车道的点也在我们的图中（通常都在），则建立双向连接
-            if left_id in nodes:
-                # 计算横向移动的成本（通常比纵向行驶成本高，以鼓励少变道）
-                lat_cost = waypoint_distance(wp, left_wp) * 1.5
+            left_id = _find_closest_existing_node_in_lane(nodes, left_wp, max_dist=sampling_resolution * 1.5)
+            if left_id is not None and left_id != wp_id:
+                lat_cost = waypoint_distance(wp, nodes[left_id]) * lane_change_cost_factor
+                _add_edge(graph, wp_id, left_id, lat_cost)
 
-                # 当前 -> 左侧
-                graph[wp_id].append((left_id, lat_cost))
-                # 左侧 -> 当前 (允许变回来)
-                if left_id not in graph: graph[left_id] = []
-                graph[left_id].append((wp_id, lat_cost))
-
-        # 检查右侧车道
+        # 右变道
         right_wp = wp.get_right_lane()
         if right_wp and is_valid_lane_change(wp, right_wp):
-            right_id = waypoint_id(right_wp)
-            if right_id in nodes:
-                lat_cost = waypoint_distance(wp, right_wp) * 1.5
+            right_id = _find_closest_existing_node_in_lane(nodes, right_wp, max_dist=sampling_resolution * 1.5)
+            if right_id is not None and right_id != wp_id:
+                lat_cost = waypoint_distance(wp, nodes[right_id]) * lane_change_cost_factor
+                _add_edge(graph, wp_id, right_id, lat_cost)
+    for wp_id, wp in list(nodes.items()):
+        if not wp.is_junction:
+            continue
 
-                # 当前 -> 右侧
-                graph[wp_id].append((right_id, lat_cost))
-                # 右侧 -> 当前
-                if right_id not in graph: graph[right_id] = []
-                graph[right_id].append((wp_id, lat_cost))
+        uturn_target_id = _find_junction_uturn_target(nodes, wp, max_dist=18.0)
+        if uturn_target_id is not None and uturn_target_id != wp_id:
+            uturn_cost = waypoint_distance(wp, nodes[uturn_target_id]) * 5.0
+            _add_edge(graph, wp_id, uturn_target_id, uturn_cost)
+    return dict(graph), nodes
 
-    return graph, nodes
+
+# =========================================================
+# 辅助函数
+# =========================================================
+def _find_junction_uturn_target(nodes, wp, max_dist=18.0):
+    """
+    只允许从 junction 内的点发起掉头。
+    目标点不要求也在 junction 内，不强制同 road_id。
+    更关注：
+    1. 是 Driving 车道
+    2. lane_id 符号相反（通常表示对向）
+    3. 朝向接近反向
+    4. 距离合理
+    """
+    best_id = None
+    best_score = float("inf")
+
+    src_loc = wp.transform.location
+    src_yaw = wp.transform.rotation.yaw
+
+    for nid, cand in nodes.items():
+        if nid == waypoint_id(wp):
+            continue
+
+        if cand.lane_type != carla.LaneType.Driving:
+            continue
+
+        # 至少不要还是同一条车道
+        if cand.road_id == wp.road_id and cand.lane_id == wp.lane_id:
+            continue
+
+        # 优先考虑对向车道
+        if wp.lane_id * cand.lane_id >= 0:
+            continue
+
+        d = src_loc.distance(cand.transform.location)
+        if d > max_dist:
+            continue
+
+        yaw_diff = abs((cand.transform.rotation.yaw - src_yaw + 180) % 360 - 180)
+        heading_score = abs(yaw_diff - 180.0)
+
+        # 偏好更近、方向更接近 180 度的点
+        score = d + heading_score * 0.12
+
+        if score < best_score:
+            best_score = score
+            best_id = nid
+
+    return best_id
+def _sample_segment_path(entry_wp, exit_wp, sampling_resolution):
+    """
+    沿 topology 中的单个 (entry_wp, exit_wp) segment 进行采样。
+    这里仍然只选“一条通向 exit 的路径”，因为它的职责只是把这条 segment 采样出来。
+    所有路口分支将在后续 build_graph 的 Step 3 统一补齐。
+    """
+    path = [entry_wp]
+    current_wp = entry_wp
+    visited = set()
+
+    while True:
+        current_id = waypoint_id(current_wp)
+        if current_id in visited:
+            break
+        visited.add(current_id)
+
+        dist_to_exit = current_wp.transform.location.distance(exit_wp.transform.location)
+        if dist_to_exit <= sampling_resolution:
+            break
+
+        next_wps = current_wp.next(sampling_resolution)
+        if not next_wps:
+            break
+
+        # 这里只是为了沿着“当前 topology segment”逼近 exit_wp
+        # 不是为了保留全分支
+        next_wp = min(
+            next_wps,
+            key=lambda cand: cand.transform.location.distance(exit_wp.transform.location)
+        )
+
+        if waypoint_id(next_wp) == current_id:
+            break
+
+        path.append(next_wp)
+        current_wp = next_wp
+
+    # 收尾补上 exit_wp
+    if waypoint_id(path[-1]) != waypoint_id(exit_wp):
+        path.append(exit_wp)
+
+    return _deduplicate_consecutive_waypoints(path)
+
+
+def _deduplicate_consecutive_waypoints(path):
+    """
+    去掉 path 中连续重复 waypoint
+    """
+    if not path:
+        return path
+
+    new_path = [path[0]]
+    for wp in path[1:]:
+        if waypoint_id(wp) != waypoint_id(new_path[-1]):
+            new_path.append(wp)
+    return new_path
+
+
+def _ensure_node(graph, wp_id):
+    if wp_id not in graph:
+        graph[wp_id] = []
+
+
+def _add_edge(graph, src_id, dst_id, cost, eps=1e-6):
+    """
+    防重复加边
+    """
+    for nid, old_cost in graph[src_id]:
+        if nid == dst_id and abs(old_cost - cost) < eps:
+            return
+    graph[src_id].append((dst_id, cost))
+
+
+def _find_closest_existing_node_in_lane(nodes, target_wp, max_dist=3.0):
+    """
+    在 nodes 中寻找与 target_wp 属于同一 road/lane，且距离最近的已存在节点
+    这样可避免因为采样不完全对齐导致 left_id/right_id 不在 nodes 里
+    """
+    best_id = None
+    best_dist = float("inf")
+
+    target_loc = target_wp.transform.location
+
+    for nid, wp in nodes.items():
+        if wp.road_id == target_wp.road_id and wp.lane_id == target_wp.lane_id:
+            d = wp.transform.location.distance(target_loc)
+            if d < best_dist:
+                best_dist = d
+                best_id = nid
+
+    if best_dist <= max_dist:
+        return best_id
+    return None
 
 
 def is_valid_lane_change(current_wp, neighbor_wp):
