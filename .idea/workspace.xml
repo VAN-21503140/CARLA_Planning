@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="430a066b-2e7b-44bf-a003-4a14ccade9d7" name="更改" comment="可以做uturn了，但是会压住黄线">
+    <list default="true" id="430a066b-2e7b-44bf-a003-4a14ccade9d7" name="更改" comment="将规划改为了class。仍然会越过黄线uturn">
+      <change afterPath="$PROJECT_DIR$/controller.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/planner.py" beforeDir="false" afterPath="$PROJECT_DIR$/planner.py" afterDir="false" />
@@ -34,6 +35,9 @@
     &quot;accountId&quot;: &quot;c15867a6-bd4a-4eaa-8834-befd9a02838a&quot;
   }
 }</component>
+  <component name="PerforceDirect.Settings">
+    <option name="CHARSET" value="无" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -78,7 +82,8 @@
       <workItem from="1775568608792" duration="4377000" />
       <workItem from="1775660872684" duration="1013000" />
       <workItem from="1775709490754" duration="369000" />
-      <workItem from="1775751608799" duration="302000" />
+      <workItem from="1775751608799" duration="1490000" />
+      <workItem from="1776002253657" duration="5861000" />
     </task>
     <task id="LOCAL-00001" summary="planner存在绕路的现象，需要后续改进。main函数画出了规划出的路径">
       <option name="closed" value="true" />
@@ -128,7 +133,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775581689267</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="将规划改为了class。仍然会越过黄线uturn">
+      <option name="closed" value="true" />
+      <created>1775752140753</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1775752140753</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -150,10 +163,11 @@
     <MESSAGE value="planner由原来的粗糙构图（边与边之间）转换为了稠密构图（点与点之间的构图）。main中起点红色，过程黄色，终点绿色。" />
     <MESSAGE value="根据上一个版本新增加了变道功能，不用再绕远路了" />
     <MESSAGE value="可以做uturn了，但是会压住黄线" />
-    <option name="LAST_COMMIT_MESSAGE" value="可以做uturn了，但是会压住黄线" />
+    <MESSAGE value="将规划改为了class。仍然会越过黄线uturn" />
+    <option name="LAST_COMMIT_MESSAGE" value="将规划改为了class。仍然会越过黄线uturn" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/CARLA_Planning$planner.coverage" NAME="planner 覆盖结果" MODIFIED="1775570533517" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CARLA_Planning$main.coverage" NAME="main 覆盖结果" MODIFIED="1775581798417" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CARLA_Planning$main.coverage" NAME="main 覆盖结果" MODIFIED="1776013023518" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

@@ -453,7 +453,8 @@ class CarlaGraphPlanner:
         src_loc = wp.transform.location
         src_yaw = wp.transform.rotation.yaw
         src_id = self._waypoint_id(wp)
-
+        if not wp.is_junction:
+            return None
         for nid, cand in self.nodes.items():
             if nid == src_id:
                 continue
